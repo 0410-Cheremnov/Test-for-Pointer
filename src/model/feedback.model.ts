@@ -5,6 +5,7 @@ import {
     PrimaryGeneratedColumn,
     UpdateDateColumn
 } from "typeorm";
+import {ApiModel, ApiModelProperty} from "swagger-express-ts";
 
 @Entity()
 export class Feedback {

@@ -5,13 +5,12 @@ import {DataSource} from "typeorm";
 import {StatusCodes} from "http-status-codes";
 import { Feedback } from './model/feedback.model';
 import axios from "axios";
-import {FeedbackDto} from "./model/feedback.dto";
+import {FeedbackDto} from "./dto/feedback.dto";
+import {FilterOptions} from "./dto/filter.options";
 
 const app: express.Application = express();
 const server: http.Server = http.createServer(app);
 const port = 3000;
-
-
 
 const AppDataSource = new DataSource({
     type: "postgres",
@@ -24,7 +23,6 @@ const AppDataSource = new DataSource({
         Feedback
     ],
     synchronize: true,
-    dropSchema: true,
 })
 
 AppDataSource.initialize()
@@ -41,9 +39,8 @@ app.get('/parser', async (req: express.Request, res: express.Response) => {
     const feedbackRepo = AppDataSource.getRepository(Feedback)
     let limit = 2500;
     let offset = 0;
-    let resp: Feedback[] = [];
-
     let count = 1;
+
     while (true) {
         console.log("iteration #",count);
         const axiosResponse = await axios.get(`https://api.delivery-club.ru/api1.2/reviews?chainId=48274&limit=${limit}&offset=${offset}&cacheBreaker=1660307294`);
@@ -51,7 +48,7 @@ app.get('/parser', async (req: express.Request, res: express.Response) => {
         for (const item of items) {
             const dto = new FeedbackDto(item);
             const feedback = await dto.toEntity();
-            resp.push(await feedbackRepo.save(feedback));
+            await feedbackRepo.save(feedback)
         }
 
         if(items.length < limit) {
@@ -66,7 +63,14 @@ res.status(StatusCodes.OK).send(
 )
 })
 
-
+app.get('/reviews', async (req: express.Request, res: express.Response) => {
+    const condition = await FilterOptions.getOptions(req.query);
+    const feedbackRepo = AppDataSource.getRepository(Feedback)
+    const data = await feedbackRepo.find(condition);
+    res.status(StatusCodes.OK).send(
+        data
+    )
+})
 server.listen(port,()=> {
     console.log("Server started")
 })

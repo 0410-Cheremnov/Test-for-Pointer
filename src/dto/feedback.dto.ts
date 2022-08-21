@@ -1,4 +1,5 @@
-import {Feedback} from "./feedback.model";
+import {Feedback} from "../model/feedback.model";
+import {ApiModel} from "swagger-express-ts";
 
 export class FeedbackDto {
     orderHash?:string;
