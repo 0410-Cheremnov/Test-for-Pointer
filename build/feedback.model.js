@@ -16,7 +16,7 @@ var Feedback = /** @class */ (function () {
     }
     __decorate([
         (0, typeorm_1.PrimaryGeneratedColumn)(),
-        __metadata("design:type", Number)
+        __metadata("design:type", String)
     ], Feedback.prototype, "id", void 0);
     __decorate([
         (0, typeorm_1.Column)(),
@@ -34,10 +34,6 @@ var Feedback = /** @class */ (function () {
         (0, typeorm_1.Column)(),
         __metadata("design:type", String)
     ], Feedback.prototype, "order", void 0);
-    __decorate([
-        (0, typeorm_1.Column)(),
-        __metadata("design:type", String)
-    ], Feedback.prototype, "answer", void 0);
     __decorate([
         (0, typeorm_1.CreateDateColumn)(),
         __metadata("design:type", Date)

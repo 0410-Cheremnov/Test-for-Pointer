@@ -67,12 +67,12 @@ var cors_1 = __importDefault(require("cors"));
 var http = __importStar(require("http"));
 var typeorm_1 = require("typeorm");
 var http_status_codes_1 = require("http-status-codes");
-var feedback_model_1 = require("./feedback.model");
+var feedback_model_1 = require("./model/feedback.model");
 var axios_1 = __importDefault(require("axios"));
-var cheerio_1 = __importDefault(require("cheerio"));
+var feedback_dto_1 = require("./model/feedback.dto");
 var app = (0, express_1.default)();
 var server = http.createServer(app);
-var port = 5000;
+var port = 3000;
 var AppDataSource = new typeorm_1.DataSource({
     type: "postgres",
     host: "localhost",
@@ -83,7 +83,8 @@ var AppDataSource = new typeorm_1.DataSource({
     entities: [
         feedback_model_1.Feedback
     ],
-    synchronize: true
+    synchronize: true,
+    dropSchema: true,
 });
 AppDataSource.initialize()
     .then(function () {
@@ -95,64 +96,50 @@ AppDataSource.initialize()
 app.use(express_1.default.json());
 app.use((0, cors_1.default)());
 app.get('/parser', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var feedbackRepo, parse, result;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
+    var feedbackRepo, limit, offset, resp, count, axiosResponse, items, _i, items_1, item, dto, feedback, _a, _b;
+    return __generator(this, function (_c) {
+        switch (_c.label) {
             case 0:
                 feedbackRepo = AppDataSource.getRepository(feedback_model_1.Feedback);
-                parse = function () { return __awaiter(void 0, void 0, void 0, function () {
-                    var getHTML, $, selector;
-                    return __generator(this, function (_a) {
-                        switch (_a.label) {
-                            case 0:
-                                getHTML = function (url) { return __awaiter(void 0, void 0, void 0, function () {
-                                    var data, load;
-                                    return __generator(this, function (_a) {
-                                        switch (_a.label) {
-                                            case 0: return [4 /*yield*/, axios_1.default.get(url)];
-                                            case 1:
-                                                data = (_a.sent()).data;
-                                                return [4 /*yield*/, cheerio_1.default.load(data)];
-                                            case 2:
-                                                load = _a.sent();
-                                                return [2 /*return*/, load];
-                                        }
-                                    });
-                                }); };
-                                return [4 /*yield*/, getHTML('https://www.delivery-club.ru/srv/KFC_msk/feedbacks')];
-                            case 1:
-                                $ = _a.sent();
-                                return [4 /*yield*/, getHTML('https://www.delivery-club.ru/srv/KFC_msk/feedbacks')];
-                            case 2:
-                                selector = _a.sent();
-                                return [2 /*return*/, selector('.vendor-reviews-item__container').each(function (i, element) { return __awaiter(void 0, void 0, void 0, function () {
-                                        var text, userName, date, order, answer, feedback, xui;
-                                        return __generator(this, function (_a) {
-                                            switch (_a.label) {
-                                                case 0:
-                                                    text = selector(element).find('div.vendor-reviews-item__text').text();
-                                                    userName = selector(element).find('div.vendor-reviews-item__username').text();
-                                                    date = selector(element).find('div.vendor-reviews-item__date').text();
-                                                    order = selector(element).find('div.vendor-reviews-item__order').text();
-                                                    answer = selector(element).find('div.vendor-reviews-item__block vendor-reviews-item__block--answer.vendor-reviews-item__text').text();
-                                                    return [4 /*yield*/, feedbackRepo.create({ text: text, userName: userName, order: order, date: date, answer: answer })];
-                                                case 1:
-                                                    feedback = _a.sent();
-                                                    xui = feedbackRepo.save(feedback);
-                                                    console.log(xui);
-                                                    return [4 /*yield*/, feedbackRepo.save(feedback)];
-                                                case 2: return [2 /*return*/, _a.sent()];
-                                            }
-                                        });
-                                    }); })];
-                        }
-                    });
-                }); };
-                return [4 /*yield*/, parse()];
+                limit = 2500;
+                offset = 0;
+                resp = [];
+                count = 1;
+                _c.label = 1;
             case 1:
-                result = _a.sent();
-                //console.log(result);
-                res.status(http_status_codes_1.StatusCodes.OK).send(result);
+                if (!true) return [3 /*break*/, 8];
+                console.log("iteration #", count);
+                return [4 /*yield*/, axios_1.default.get("https://api.delivery-club.ru/api1.2/reviews?chainId=48274&limit=".concat(limit, "&offset=").concat(offset, "&cacheBreaker=1660307294"))];
+            case 2:
+                axiosResponse = _c.sent();
+                items = axiosResponse.data.reviews;
+                _i = 0, items_1 = items;
+                _c.label = 3;
+            case 3:
+                if (!(_i < items_1.length)) return [3 /*break*/, 7];
+                item = items_1[_i];
+                dto = new feedback_dto_1.FeedbackDto(item);
+                return [4 /*yield*/, dto.toEntity()];
+            case 4:
+                feedback = _c.sent();
+                _b = (_a = resp).push;
+                return [4 /*yield*/, feedbackRepo.save(feedback)];
+            case 5:
+                _b.apply(_a, [_c.sent()]);
+                _c.label = 6;
+            case 6:
+                _i++;
+                return [3 /*break*/, 3];
+            case 7:
+                if (items.length < limit) {
+                    return [3 /*break*/, 8];
+                }
+                limit += 50;
+                offset += limit;
+                count++;
+                return [3 /*break*/, 1];
+            case 8:
+                res.status(http_status_codes_1.StatusCodes.OK).send({ message: 'all feedback is parsed!' });
                 return [2 /*return*/];
         }
     });

@@ -1,30 +1,30 @@
 import {
     Column,
     CreateDateColumn,
-    Entity,
+    Entity, PrimaryColumn,
     PrimaryGeneratedColumn,
     UpdateDateColumn
 } from "typeorm";
 
 @Entity()
 export class Feedback {
-    @PrimaryGeneratedColumn()
+    @PrimaryColumn()
     id?:string;
 
     @Column()
     userName?: string;
 
-    @Column()
-    date?: string;
+    @Column({type: 'timestamptz'})
+    date?: Date;
 
     @Column()
     text?: string;
 
-    @Column()
-    order?: string; 
+    @Column({type: 'jsonb'})
+    order?: object[];
 
-   // @Column()
-    //answer?: string;
+    @Column({type: 'jsonb', nullable: true})
+    answer?: object[];
 
     @CreateDateColumn()
     createdAt?: Date;
